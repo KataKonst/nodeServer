@@ -1,0 +1,79 @@
+<!doctype html>
+
+<button   onclick="seti()" id="btn">Start</button>
+<button onclick="set2()" id="btn2">Stop</button>
+
+<script src="dist/user_media_recorder.js"></script>
+<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+
+<script>
+var socket = io();
+
+var button = document.getElementById("btn");
+var button2 = document.getElementById("btn2");
+var intid;
+var recorder;
+var worker = new Worker("webworkers/mp3_worker.js");
+var config = {
+  mono: true
+};
+
+
+function seti(){
+  intid=window.setInterval(st,1000);
+//  alert("SAd")
+
+}
+
+
+function set2(){
+
+  clearInterval(intid);
+
+
+}
+
+
+
+
+socket.on("melodie",function(data){
+
+  alert(data);
+});
+
+navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia;
+navigator.getUserMedia({audio: true, video: false}, function(stream) {
+  recorder = new UserMediaRecorder(stream, worker);
+
+}, function(e) {
+  console.error(e);
+});
+
+var st=function startRecording() {
+  console.log("starting");
+  var recording = recorder.startRecording(config);
+  setTimeout(function() {
+    console.log("stopping");
+    recorder.stopRecording(recording, function(blob) {
+      var url = URL.createObjectURL(blob);
+      console.log(url);
+    //  window.open(url);
+
+
+                        var arrayBuffer;
+                        var fileReader = new FileReader();
+                        fileReader.onload = function() {
+                            arrayBuffer = this.result;
+                            socket.emit("data",arrayBuffer);
+                        };
+                        fileReader.readAsArrayBuffer(blob);
+                      });
+  }, 1000);
+};
+
+
+
+
+
+
+</script>
